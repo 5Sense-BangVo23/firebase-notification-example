@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to Firebase Hosting</title>
+
+</head>
+
+<body>
+    <div class="container">
+        <h1> Push Notification Message </h1>
+        <div class="message" style="min-height: 100px;"></div>
+        <div id="deviceToken"> Device Token: </div>
+        <button>Click</button>
+    </div>
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-messaging-compat.js"></script>-->
+
+    <script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-messaging-compat.js"></script>
+    <!-- Include other Firebase scripts for other Firebase services if needed -->
+
+    <script type="text/javascript">
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyryAYPpletpWH-qdD02GHFVu8r_VOpDY",
+            authDomain: "push-notification-5sense.firebaseapp.com",
+            projectId: "push-notification-5sense",
+            storageBucket: "push-notification-5sense.appspot.com",
+            messagingSenderId: "588468879732",
+            appId: "1:588468879732:web:c379a24a70b86525b1ac21",
+            measurementId: "G-5EBTZ7JEY4"
+            };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging(app);
+
+        messaging.getToken({ vapidKey: "BGfzLFA5hoAcwu8j3jo6Phwa0otj-CglxbruXYbP809ujEkOjr2WdFJ3Hiwgz-LjH7XbpbwK7x6vxBRkdCiq4SQ" }).then((currentToken) =>{
+            if(currentToken){
+                console.log(currentToken);
+                document.querySelector("body");
+                sendTokenToServer(currentToken);
+            }
+        }).catch((error) =>{
+            console.log(error);
+            setSentTokenToServer(false);
+        });
+       
+        document.addEventListener("DOMContentLoaded", function() {
+            messaging.onMessage((payload) => {
+            console.log("Message received ", payload);
+            const messagesElement = document.querySelector(".message");
+            const dataHeaderElement = document.createElement("h5");
+            const dataElement = document.createElement("pre");
+            dataElement.style = "overflow-x:hidden;";
+            dataHeaderElement.textContent = "Message Received:";
+            dataElement.textContent = JSON.stringify(payload, null, 2);
+            messagesElement.appendChild(dataHeaderElement);
+            messagesElement.appendChild(dataElement);
+        });
+        });
+
+
+        function sendTokenToServer(currentToken){
+            if(!isTokenSentToServer()){
+                console.log("Sending token to server ...");
+                setSentTokenToServer(true);
+            }else{
+                console.log("Token already available in the server");
+            }
+        }
+
+        function isTokenSentToServer(){
+             return window.localStorage.getItem('sentToServer') === 1;   
+        }
+
+        function setSentTokenToServer(sent){
+            window.localStorage.getItem('sentToServer', sent ? '1' : '0');
+        }
+
+
+        if ("serviceWorker" in navigator) {
+                navigator.serviceWorker
+                .register("/firebase-messaging-sw.js",{scope:'/'})
+                .then(function(registration) {
+                    console.log("Registration successful, scope is:", registration.scope);
+                    messaging.getToken({vapidKey: "BGfzLFA5hoAcwu8j3jo6Phwa0otj-CglxbruXYbP809ujEkOjr2WdFJ3Hiwgz-LjH7XbpbwK7x6vxBRkdCiq4SQ", serviceWorkerRegistration : registration })
+                    .then((currentToken) => {
+                        if (currentToken) {
+                        console.log('current token for client: ', currentToken);
+
+                        // Track the token -> client mapping, by sending to backend server
+                        // show on the UI that permission is secured
+                        } else {
+                        console.log('No registration token available. Request permission to generate one.');
+
+                        // shows on the UI that permission is required 
+                        }
+                    }).catch((err) => {
+                        console.log('An error occurred while retrieving token. ', err);
+                        // catch error while creating client token
+                    });  
+                    })
+                    .catch(function(err) {
+                    console.log("Service worker registration failed, error:"  , err );
+                }); 
+                }
+
+
+
+
+        // function IntitalizeFireBaseMessaging() {
+        //     messaging
+        //         .requestPermission()
+        //         .then(function () {
+        //             console.log("Notification Permission");
+        //             return messaging.getToken({ vapidKey: "BGfzLFA5hoAcwu8j3jo6Phwa0otj-CglxbruXYbP809ujEkOjr2WdFJ3Hiwgz-LjH7XbpbwK7x6vxBRkdCiq4SQ" });
+        //         })
+        //         .then(function (token) {
+        //             console.log("Token : " + token);
+        //             document.getElementById("deviceToken").innerHTML = token;
+        //         })
+        //         .catch(function (reason) {
+        //             console.log(reason);
+        //         });
+        // }
+
+        // messaging.onMessage(function (payload) {
+        //     console.log(payload);
+        //     const notificationOption={
+        //         body:payload.notification.body,
+        //         icon:payload.notification.icon
+        //     };
+
+        //     if(Notification.permission==="granted"){
+        //         var notification=new Notification(payload.notification.title,notificationOption);
+
+        //         notification.onclick=function (ev) {
+        //             ev.preventDefault();
+        //             window.open(payload.notification.click_action,'_blank');
+        //             notification.close();
+        //         }
+        //     }
+
+        // });
+
+        //  messaging.onMessage((payload) => {
+        //         console.log("Running .........");
+        //         console.log("Message received ", payload);
+        //         const messagesElement = document.querySelector(".message");
+        //         const dataHeaderElement = document.createElement("h5");
+        //         const dataElement = document.createElement("pre");
+        //         dataElement.style = "overflow-x:hidden;";
+        //         dataHeaderElement.textContent = "Message Received:";
+        //         dataElement.textContent = JSON.stringify(payload, null, 2);
+        //         messagesElement.appendChild(dataHeaderElement);
+        //         messagesElement.appendChild(dataElement);
+        // });
+
+        // messaging.onTokenRefresh(function () {
+        //     messaging.getToken()
+        //         .then(function (newtoken) {
+        //             console.log("New Token : " + newtoken);
+        //         })
+        //         .catch(function (reason) {
+        //             console.log(reason);
+        //         })
+        // })
+
+
+        // IntitalizeFireBaseMessaging();
+
+
+
+
+
+
+        // function requestPermission() {
+        // console.log('Requesting permission...');
+        // Notification.requestPermission().then((permission) => {
+        //     if (permission === 'granted') {
+        //     console.log('Notification permission granted.');
+        //     // You can now use native browser notifications.
+        //     } else {
+        //     console.log('Notification permission denied.');
+        //     }
+        // }).catch((error) => {
+        //     console.error('Error requesting permission:', error);
+        // });
+        // }
+
+        // // Call the function to request permission.
+        // requestPermission();
+
+        // messaging.onBackgroundMessage(function(payload) {
+        //     console.log('[firebase-messaging-sw.js] Received background message ', payload);
+        //     // Customize notification here
+        //     const notificationTitle = 'Background Message Title';
+        //     const notificationOptions = {
+        //         body: 'Background Message body.',
+        //         icon: '/firebase-logo.png'
+        //     };
+
+        // self.registration.showNotification(notificationTitle,
+        //     notificationOptions);
+        // });
+
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                scope: '/'
+            })
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+
+            // navigator.serviceWorker.register('/script.js',{ scope:'/'})
+            //     .then((registration) => {
+            //         console.log('Style Worker registered with scope:', registration.scope);
+            //     })
+            //     .catch((error) => {
+            //         console.error('Style Worker registration failed:', error);
+            //     });
+
+            const button = document.querySelector("button");
+
+            button.addEventListener("click", () => {
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(perm => {
+
+                        const notification = new Notification("Example Notification", {
+                            body: "This is content text",
+                            data: {
+                                hello: 'world',
+                            }
+                        })
+                        console.log(notification)
+                        notification.addEventListener('error', e => {
+                            console.log("Error")
+                        });
+                        if (perm === 'granted') {
+                            console.log('Notification permission granted.');
+                        } else if (perm === 'denied') {
+                            console.log('Notification permission denied.');
+                        } else {
+                            console.log('Notification permission dismissed.');
+                        }
+                            });
+                        }
+                        
+
+            })
+
+        }
+
+
+    </script>
+</body>
+
+</html>
